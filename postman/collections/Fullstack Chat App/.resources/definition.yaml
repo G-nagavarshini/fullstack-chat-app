@@ -1,0 +1,6 @@
+$kind: collection
+name: Fullstack Chat App
+description: 'API collection for the fullstack real-time chat application. Base URL: `{{baseUrl}}`. Protected routes use JWT cookie auth + CSRF token header `x-xsrf-token`.'
+variables:
+  - key: baseUrl
+    value: 'http://localhost:5001'
