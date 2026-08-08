@@ -1,6 +1,8 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+console.log("Mongo URL:", process.env.MONGODB_URL);
+console.log("JWT Secret:", process.env.JWT_SECRETKEY);
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
