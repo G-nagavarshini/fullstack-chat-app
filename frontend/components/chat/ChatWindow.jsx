@@ -80,38 +80,43 @@ export default function ChatWindow({ selectedUser, onBack, isMobileHidden }) {
     const [recentSearches, setRecentSearches] = useState([])
     const [processingImage, setProcessingImage] = useState(false);
 
-    // Debounced search trigger
-    useEffect(() => {
-        if (!searchQuery.trim()) {
-            Promise.resolve().then(() => setSearchResults([]));
-            return;
-        }
-        const timer = setTimeout(async () => {
-            if (!selectedUser?._id) return;
-            const results = await searchTextMessages(
-                selectedUser._id,
-                searchQuery
-            );
+   
+// Debounced search trigger
+useEffect(() => {
+    if (!searchQuery.trim()) {
+        setSearchResults([]);
+        return;
+    }
 
-            setSearchResults(results || []);
+    const timer = setTimeout(async () => {
+        if (!selectedUser?._id) return;
 
+        const results = await searchTextMessages(
+            selectedUser._id,
+            searchQuery
+        );
+
+        setSearchResults(results || []);
+
+        setRecentSearches((prev) => {
             const updatedSearches = [
                 searchQuery,
-                ...recentSearches.filter(
+                ...prev.filter(
                     item => item !== searchQuery
                 )
             ].slice(0, 5);
-
-            setRecentSearches(updatedSearches);
 
             localStorage.setItem(
                 "recentSearches",
                 JSON.stringify(updatedSearches)
             );
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [searchQuery, selectedUser?._id, recentSearches, searchTextMessages]);
 
+            return updatedSearches;
+        });
+    }, 300);
+
+    return () => clearTimeout(timer);
+}, [searchQuery, selectedUser?._id, searchTextMessages]);
     useEffect(() => {
         const savedSearches = JSON.parse(
             localStorage.getItem("recentSearches") || "[]"
@@ -608,43 +613,86 @@ setShowSpamWarning(
                 </div>
             </div>
 
-            {searchOpen && (
-                <div className="flex flex-col border-b border-base-200 bg-base-100 shrink-0 sticky top-14 z-10">
-                    <div className="flex items-center gap-2 px-4 py-2 bg-base-200 border-b border-base-300 shadow-inner">
-                        <input
-                            type="text"
-                            placeholder="Search messages in this chat..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="input input-sm input-bordered flex-1 focus:outline-none"
-                            autoFocus
-                        />
-                        <button onClick={() => { setSearchOpen(false); setSearchResults([]); setSearchQuery(""); }} className="btn btn-sm btn-ghost btn-circle">
-                            <X className="w-4 h-4" />
-                        </button>
-                    </div>
-                    {searchResults.length > 0 && (
-                        <div className="max-h-40 overflow-y-auto py-1.5 px-3 border-t border-base-300 space-y-1">
-                            <p className="text-xs text-base-content/40 mb-1">{searchResults.length} results found:</p>
-                            {searchResults.map((res) => (
-                                <button
-                                    key={res._id}
-                                    onClick={() => scrollToMessage(res._id)}
-                                    className="w-full text-left text-xs p-1.5 rounded hover:bg-base-200 block truncate"
-                                >
-                                    <span className="font-semibold text-primary">{res.senderId === authUser._id ? "You" : selectedUser.name}: </span>
-                                    <span>{res.message}</span>
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                    {searchQuery && searchResults.length === 0 && (
-                        <div className="px-4 py-2 text-xs text-base-content/40">
-                            No results found
-                        </div>
-                    )}
-                </div>
-            )}
+{searchOpen && (
+    <div className="flex flex-col border-b border-base-200 bg-base-100 shrink-0 sticky top-14 z-10">
+        <div className="flex items-center gap-2 px-4 py-2 bg-base-200 border-b border-base-300 shadow-inner">
+
+            {/* Search Input + Clear Button */}
+            <div className="relative flex-1">
+
+                <input
+                    type="text"
+                    placeholder="Search messages in this chat..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="input input-sm input-bordered w-full focus:outline-none pr-10"
+                    autoFocus
+                />
+
+                {/* CLEAR SEARCH BUTTON */}
+                {searchQuery && (
+                    <button
+                        onClick={() => {
+                            setSearchQuery("");
+                            setSearchResults([]);
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 btn btn-ghost btn-xs btn-circle"
+                        title="Clear search"
+                        aria-label="Clear search"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                )}
+
+            </div>
+
+            {/* CLOSE SEARCH BUTTON */}
+            <button
+                onClick={() => {
+                    setSearchOpen(false);
+                    setSearchResults([]);
+                    setSearchQuery("");
+                }}
+                className="btn btn-sm btn-ghost btn-circle"
+                title="Close search"
+                aria-label="Close search"
+            >
+                <X className="w-4 h-4" />
+            </button>
+
+        </div>
+
+        {searchResults.length > 0 && (
+            <div className="max-h-40 overflow-y-auto py-1.5 px-3 border-t border-base-300 space-y-1">
+                <p className="text-xs text-base-content/40 mb-1">
+                    {searchResults.length} results found:
+                </p>
+
+                {searchResults.map((res) => (
+                    <button
+                        key={res._id}
+                        onClick={() => scrollToMessage(res._id)}
+                        className="w-full text-left text-xs p-1.5 rounded hover:bg-base-200 block truncate"
+                    >
+                        <span className="font-semibold text-primary">
+                            {res.senderId === authUser._id
+                                ? "You"
+                                : selectedUser.name}:
+                        </span>
+
+                        <span>{res.message}</span>
+                    </button>
+                ))}
+            </div>
+        )}
+
+        {searchQuery && searchResults.length === 0 && (
+            <div className="px-4 py-2 text-xs text-base-content/40">
+                No results found
+            </div>
+        )}
+    </div>
+)}
 
             {showGallery && (
     <div className="border-b border-base-200 bg-base-100 p-3">

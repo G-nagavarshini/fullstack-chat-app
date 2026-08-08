@@ -337,15 +337,28 @@ const useChatStore = create((set, get) => ({
         }
     },
 
-    searchTextMessages: async (userId, query) => {
-        try {
-            const res = await axiosInstance.get(`/messages/search-text/${userId}?q=${encodeURIComponent(query)}`);
-            return res.data;
-        } catch {
-            toast.error("Text search failed");
-            return [];
-        }
-    },
+searchTextMessages: async (userId, query) => {
+    try {
+        const res = await axiosInstance.get(
+            `/messages/search-text/${userId}?q=${encodeURIComponent(query)}`
+        );
+
+        console.log("TEXT SEARCH SUCCESS:", res.data);
+
+        return res.data;
+    } catch (error) {
+        console.error("TEXT SEARCH ERROR:", error);
+        console.error("STATUS:", error.response?.status);
+        console.error("DATA:", error.response?.data);
+        console.error("URL:", error.config?.url);
+
+        toast.error(
+            error.response?.data?.message || "Text search failed"
+        );
+
+        return [];
+    }
+},
 
     setSelectedUser: (user) => {
         if (!user) return set({ selectedUser: null, messages: [] });
